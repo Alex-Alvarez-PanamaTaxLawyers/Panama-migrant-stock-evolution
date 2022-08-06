@@ -1,0 +1,119 @@
+---
+title: "MIGRANT STOCK EVOLUTION IN PANAMA FROM DIFFERENT REGIONS AND COUNTRIES FROM 1990 TO 2020."
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Migrant Stock UN definition.
+
+### Dataset
+
+According to UN.org site Migran Stock is defined as ¨the estimates of the number (or "stock") of international migrants disaggregated by age, sex and country or area of origin are based on national statistics, in most cases obtained from population censuses. Additionally, population registers and nationally representative surveys provided information on the number and composition of international migrants¨.
+
+The dataset used presents estimates of international migrant by age, sex and origin. Estimates are presented for 1990, 1995, 2000, 2005, 2010, 2015 and 2020 and are available for 232 countries and areas of the world. The estimates are based on official statistics on the foreign-born or the foreign population.
+
+### Scope of the Analysis
+
+Our analysis are based only on data corresponding to Panama, central american country which this study is focused.
+
+### Purpose of the Analysis
+
+Identify the behavior of migratory flows from different regions to Panama and its evolution from the year 1990 to 2020.
+
+## Methodology
+
+RStudio was used to clean and filter data from the UN international Migrant Stock database, <https://www.un.org/development/desa/pd/sites/www.un.org.development.desa.pd/files/undesa_pd_2020_ims_stock_by_sex_destination_and_origin.xlsx>
+
+## Code
+
+library(tidyverse) library(openxlsx) library(knitr) library(magrittr)
+
+> P \<- read.xlsx("<https://www.un.org/development/desa/pd/sites/www.un.org.development.desa.pd/files/undesa_pd_2020_ims_stock_by_sex_destination_and_origin.xlsx>", sheet = "Table 1", startRow = 10, na.strings = c("..", ""))
+
+> Pam \<- P %\>%
+
+-   filter(Location.code.of.destination == 591)
+
+> install.packages("dplyr") Pama \<- Pam %\>%
+
+-   dplyr::select(Country_of_Origin, X1990, X1995, X2000, X2005, X2010, X2015, X2020) %\>%
+-   mutate_all(as.character)
+
+> Roma \<- Pama %\>%
+
+-   pivot_longer(!Country_of_Origin, names_to = "years", values_to = "migrants")
+
+> view(Roma)
+
+> Roma$years <- format(Roma$years,'%Y') Roma$Country_of_Origin <- as_factor(Roma$Country_of_Origin) sapply(Roma,class)
+
+> Latinamerica \<- data.frame(years = c("1990", "1995", "2000", "2005", "2010", "2015", "2020"), Country_of_Origin = c("Ecuador", "Argentina", "Colombia", "Paraguay", "Uruguay", "Bolivia (Plurinational State of)", "Brazil", "Chile", "Costa Rica", "Cuba", "Dominican Republic", "El Salvador", "Honduras", "Mexico", "Nicaragua", "Peru", "Puerto Rico\*", "Venezuela (Bolivarian Republic of)", "Guatemala"))
+
+> Latinamerica \<- Roma %\>%
+
+-   filter(str_detect(Country_of_Origin, paste(c("Ecuador", "Argentina", "Colombia", "Paraguay", "Uruguay", "Bolivia", "Brazil", "Chile", "Costa Rica", "Cuba", "Dominican Republic", "El Salvador", "Honduras", "Mexico", "Nicaragua", "Peru", "Puerto Rico\*", "Venezuela", "Guatemala"),collapse = '\|')))
+
+> Europe \<- Roma %\>%
+
+-   filter(str_detect(Country_of_Origin, paste(c("United Kingdom*", "Ukraine*", "Turkey", "Swirzerland", "Sweden", "Spain", "Serbia", "Slovakia", "Romania", "Portugal", "Poland", "Norway", "Netherlands\*", "Lithuania", "Italy", "Ireland", "Hungary", "Greece", "Germany", "Georgia", "France", "Finland", "Czechia", "Croatia", "Bulgaria", "Belgium", "Austria"),collapse = '\|')))
+
+> Asia \<- Roma %\>%
+
+-   filter(str_detect(Country_of_Origin, paste(c("VietNam", "Thailand", "Syrian Arab Republic", "State of Palestine", "Singapore", "Saudi Arabia", "Russian Federation", "Republic of Korea", "Philippines", "Pakistan", "Myanmar", "Malaysia\*", "Japan", "Iran", "Indonesia", "China", "China, Hong Kong SAR", "India", "Bangladesh" ),collapse = '\|')))
+
+Africa \<- Roma %\>%
+
+-   filter(str_detect(Country_of_Origin, paste(c("South Africa", "Saudi Arabia", "Nigeria", "Morocco", "Libya", "Lebanon", "Jordan", "Egypt"),collapse = '\|')))
+
+> GraphLatinamerica \<- ggplot(Latinamerica, aes(x=years, y=migrants, color=reorder(Country_of_Origin, -migrants)))+ geom_line(lwd=1) GraphLatinamerica
+
+> GraphAsia \<- ggplot(Asia, aes(x=years, y= migrants, color= reorder(Country_of_Origin, -migrants)))+ geom_line(lwd=1) GraphAsia
+
+> GraphEurope \<- ggplot(Europe, aes(x=years, y=migrants, color=reorder(Country_of_Origin, -migrants)))+ geom_line(lwd=1) GraphEurope
+
+> GraphAfrica \<- ggplot(Africa, aes(x=years, y=migrants, color=reorder(Country_of_Origin, -migrants)))+ geom_line(lwd=1)
+
+> install.packages("flexdashboard")
+
+---
+title: "MIGRANT STOCK EVOLUTION IN PANAMA FROM DIFFERENT REGIONS AND COUNTRIES FROM 1990 TO 2020"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: scroll
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Column {data-width="500"}
+
+### Latinamerica
+
+```{r}
+GraphLatinamerica
+```
+
+### Africa
+
+```{r}
+GraphAfrica
+```
+
+Column {data-width="500"}
+
+### Europe
+
+```{r}
+GraphEurope
+```
+
+### Asia
+
+```{r}
+GraphAsia
+```
